@@ -1709,14 +1709,14 @@ var spawnNew = (cmd, { args, stdin, stdout, stderr }) => {
     stdout,
     stderr
   }).spawn();
-  const writer = child.stdin.getWriter();
-  const reader = child.stdout.getReader();
+  const writer = stdin === "piped" ? child.stdin.getWriter() : null;
+  const reader = stdout === "piped" ? child.stdout.getReader() : null;
   return {
-    write: (bytes) => writer.write(bytes),
-    read: () => reader.read().then((x) => x.value || null),
+    write: writer === null ? null : (bytes) => writer.write(bytes),
+    read: reader === null ? null : () => reader.read().then((x) => x.value || null),
     close: async () => {
-      await writer.close();
-      await reader.cancel();
+      await writer?.close();
+      await reader?.cancel();
       await child.status;
     },
     status: () => child.status
